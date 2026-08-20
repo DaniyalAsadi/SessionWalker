@@ -1,8 +1,8 @@
+using System;
+using System.Linq;
 using Microsoft.Build.Locator;
 
 namespace SessionWalker.Infrastructure;
-
-using Microsoft.Build.Locator;
 
 public static class MsBuildBootstrapper
 {
