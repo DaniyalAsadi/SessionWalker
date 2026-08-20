@@ -1,23 +1,25 @@
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
+using Microsoft.Build.Construction;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.MSBuild;
 
 namespace SessionWalker.Infrastructure;
 
-
-using Microsoft.Build.Construction;
-using Microsoft.CodeAnalysis;
-using Microsoft.CodeAnalysis.MSBuild;
 /// <summary>
 /// Wraps MSBuildWorkspace so a broken project (missing reference, bad
 /// target, unsupported SDK, ...) never takes down the whole analysis run —
 /// per design brief section 20, compilation errors must be reported, not
 /// fatal. <see cref="LoadResult.Diagnostics"/> collects every
 /// WorkspaceFailed event so the CLI can print/log them.
+///
+/// Opening projects individually (instead of OpenSolutionAsync) is
+/// important for legacy .NET Framework 4.7.2 csproj solutions: a single
+/// unloadable project must not abort analysis of the rest of the solution.
 /// </summary>
 public sealed class RoslynWorkspaceLoader : IDisposable
 {
@@ -57,7 +59,8 @@ public sealed class RoslynWorkspaceLoader : IDisposable
 
         var properties = new Dictionary<string, string>
         {
-            ["Configuration"] = "Debug"
+            ["Configuration"] = "Debug",
+            ["BuildingInsideVisualStudio"] = "true"
         };
 
         _workspace = MSBuildWorkspace.Create(properties);
