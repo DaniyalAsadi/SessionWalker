@@ -67,10 +67,13 @@
     <Compile Include="Core\Models\SourceLocation.cs" />
     <Compile Include="Core\Models\SymbolInfo.cs" />
     <Compile Include="GlobalUsings.cs" />
-    <Compile Include="Infrastructure\MsBuildBootstrapper.cs" />
     <Compile Include="Infrastructure\Output\ConsoleOutputWriter.cs" />
     <Compile Include="Infrastructure\Output\CsvOutputWriter.cs" />
     <Compile Include="Infrastructure\Output\JsonOutputWriter.cs" />
+    <Compile Include="Infrastructure\ProjectSystem\PathUtilities.cs" />
+    <Compile Include="Infrastructure\ProjectSystem\ProjectFileReader.cs" />
+    <Compile Include="Infrastructure\ProjectSystem\ReferenceResolver.cs" />
+    <Compile Include="Infrastructure\ProjectSystem\SolutionFileReader.cs" />
     <Compile Include="Infrastructure\RoslynWorkspaceLoader.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
@@ -81,28 +84,11 @@
   </ItemGroup>
   <ItemGroup>
     <!--
-      Microsoft.Build is compile-only. Copying it to the output directory would
-      load MSBuild assemblies before Microsoft.Build.Locator can register the
-      Visual Studio / Build Tools copy, which is required to open legacy
-      .NET Framework csproj files.
+      Solution/project files are parsed in-process (Infrastructure\ProjectSystem),
+      so neither MSBuild nor Microsoft.Build.Locator is referenced any more and
+      the tool runs on machines without Visual Studio / Build Tools installed.
     -->
-    <PackageReference Include="Microsoft.Build">
-      <Version>18.9.6</Version>
-      <ExcludeAssets>runtime</ExcludeAssets>
-      <PrivateAssets>all</PrivateAssets>
-    </PackageReference>
-    <PackageReference Include="Microsoft.Build.Framework">
-      <Version>18.9.6</Version>
-      <ExcludeAssets>runtime</ExcludeAssets>
-      <PrivateAssets>all</PrivateAssets>
-    </PackageReference>
-    <PackageReference Include="Microsoft.Build.Locator">
-      <Version>1.11.2</Version>
-    </PackageReference>
     <PackageReference Include="Microsoft.CodeAnalysis.CSharp.Workspaces">
-      <Version>5.9.0</Version>
-    </PackageReference>
-    <PackageReference Include="Microsoft.CodeAnalysis.Workspaces.MSBuild">
       <Version>5.9.0</Version>
     </PackageReference>
     <PackageReference Include="System.Collections.Immutable">
