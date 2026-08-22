@@ -1,4 +1,3 @@
-using System.Collections.Generic;
 using SessionWalker.Core.Models;
 
 namespace SessionWalker.Analyzer;

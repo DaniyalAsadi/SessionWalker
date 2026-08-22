@@ -1,5 +1,3 @@
-using System;
-
 namespace SessionWalker.Cli;
 
 public enum OutputFormat

@@ -1,5 +1,3 @@
-using System.Threading;
-using System.Threading.Tasks;
 using SessionWalker.Core.Models;
 
 namespace SessionWalker.Core.Interfaces;

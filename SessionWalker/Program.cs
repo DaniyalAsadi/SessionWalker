@@ -1,10 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.IO;
-using System.Linq;
-using System.Threading;
-using System.Threading.Tasks;
-using SessionWalker.Cli;
+﻿using SessionWalker.Cli;
 using SessionWalker.Core.Interfaces;
 using SessionWalker.Infrastructure;
 using SessionWalker.Infrastructure.Output;

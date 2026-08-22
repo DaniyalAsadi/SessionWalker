@@ -1,12 +1,7 @@
-using System;
-using System.Globalization;
-using System.IO;
-using System.Linq;
-using System.Text;
-using System.Threading;
-using System.Threading.Tasks;
 using SessionWalker.Core.Interfaces;
 using SessionWalker.Core.Models;
+using System.Globalization;
+using System.Text;
 
 namespace SessionWalker.Infrastructure.Output;
 
