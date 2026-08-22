@@ -81,7 +81,7 @@ public sealed class SessionUsageAnalyzer : ICodeAnalyzer
                 cancellationToken).ConfigureAwait(false);
         }
 
-        var controllers = ActionSessionSummaryBuilder.Build(compilation, context.Project.Name, controllerBase, raw, cancellationToken);
+        var controllers = ActionSessionSummaryBuilder.Build(compilation, context.Project.Name, controllerBase, raw, cancellationToken, context.SemanticModelCache);
 
         var payload = new SessionAnalyzerResult(
             raw.Select(r => r.Result).ToList(),
@@ -168,7 +168,7 @@ public sealed class SessionUsageAnalyzer : ICodeAnalyzer
 
             foreach (var hit in hits)
             {
-                var symbolInfo = BuildSymbolInfo(context, compilation, tree, invocation, controllerBase, cancellationToken, out var containingMethod, out var containingClass);
+                var symbolInfo = BuildSymbolInfo(context, compilation, tree, model, invocation, controllerBase, cancellationToken, out var containingMethod, out var containingClass);
                 var location = ToSourceLocation(context.Project, tree, invocation.Span);
 
                 var result = new SessionOperationResult(
@@ -204,7 +204,7 @@ public sealed class SessionUsageAnalyzer : ICodeAnalyzer
 
         var isWrite = elementAccess.Parent is AssignmentExpressionSyntax assignment && assignment.Left == elementAccess;
 
-        var symbolInfo = BuildSymbolInfo(context, compilation, tree, elementAccess, controllerBase, cancellationToken, out var containingMethod, out var containingClass);
+        var symbolInfo = BuildSymbolInfo(context, compilation, tree, model, elementAccess, controllerBase, cancellationToken, out var containingMethod, out var containingClass);
         var location = ToSourceLocation(context.Project, tree, elementAccess.Span);
 
         var result = new SessionOperationResult(
@@ -239,7 +239,7 @@ public sealed class SessionUsageAnalyzer : ICodeAnalyzer
         var methodName = memberAccess.Name.Identifier.ValueText;
         var mutationKind = MapMutatingMethodName(methodName);
 
-        var symbolInfo = BuildSymbolInfo(context, compilation, tree, invocation, controllerBase, cancellationToken, out var containingMethod, out var containingClass);
+        var symbolInfo = BuildSymbolInfo(context, compilation, tree, model, invocation, controllerBase, cancellationToken, out var containingMethod, out var containingClass);
         var location = ToSourceLocation(context.Project, tree, invocation.Span);
 
         var result = new SessionOperationResult(
@@ -275,14 +275,13 @@ public sealed class SessionUsageAnalyzer : ICodeAnalyzer
         AnalysisContext context,
         Compilation compilation,
         SyntaxTree tree,
+        SemanticModel model,
         SyntaxNode node,
         INamedTypeSymbol controllerBase,
         CancellationToken cancellationToken,
         out IMethodSymbol containingMethod,
         out INamedTypeSymbol containingClass)
     {
-        var model = context.SemanticModelCache.GetSemanticModel(compilation, tree);
-
         var methodDecl = node.FirstAncestorOrSelf<MethodDeclarationSyntax>();
         var classDecl = node.FirstAncestorOrSelf<ClassDeclarationSyntax>();
 

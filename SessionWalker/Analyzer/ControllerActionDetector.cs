@@ -1,6 +1,7 @@
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
+using SessionWalker.Core.Interfaces;
 
 namespace SessionWalker.Analyzer;
 
@@ -36,9 +37,9 @@ public static class ControllerActionDetector
     /// System.Web.Mvc.ControllerBase. Returns an empty sequence — never
     /// throws — if System.Web.Mvc is not referenced by the project at all,
     /// since not every project in a solution is necessarily an MVC web
-    /// project.
+    /// project. Reuses SemanticModel instances from <paramref name="semanticModelCache"/> if provided.
     /// </summary>
-    public static IEnumerable<ControllerCandidate> FindControllers(Compilation compilation, CancellationToken cancellationToken)
+    public static IEnumerable<ControllerCandidate> FindControllers(Compilation compilation, CancellationToken cancellationToken, ISemanticModelCache? semanticModelCache = null)
     {
         var controllerBase = compilation.GetTypeByMetadataName(MvcControllerBaseMetadataName);
         if (controllerBase is null)
@@ -50,7 +51,7 @@ public static class ControllerActionDetector
         {
             cancellationToken.ThrowIfCancellationRequested();
 
-            var model = compilation.GetSemanticModel(tree);
+            var model = semanticModelCache?.GetSemanticModel(compilation, tree) ?? compilation.GetSemanticModel(tree);
             var root = tree.GetRoot(cancellationToken);
 
             foreach (var classDecl in root.DescendantNodes().OfType<ClassDeclarationSyntax>())
@@ -114,11 +115,12 @@ public static class ControllerActionDetector
     /// members (constructors, property accessors). MVC treats any such
     /// method as an action regardless of return type, so — per the design
     /// brief — this deliberately does not filter by return type name; it
-    /// only records the return type for display purposes.
+    /// only records the return type for display purposes. Reuses SemanticModel
+    /// instances from <paramref name="semanticModelCache"/> if provided.
     /// </summary>
-    public static IEnumerable<ActionCandidate> FindActions(Compilation compilation, ControllerCandidate controller, CancellationToken cancellationToken)
+    public static IEnumerable<ActionCandidate> FindActions(Compilation compilation, ControllerCandidate controller, CancellationToken cancellationToken, ISemanticModelCache? semanticModelCache = null)
     {
-        var model = compilation.GetSemanticModel(controller.Tree);
+        var model = semanticModelCache?.GetSemanticModel(compilation, controller.Tree) ?? compilation.GetSemanticModel(controller.Tree);
 
         foreach (var methodDecl in controller.Declaration.Members.OfType<MethodDeclarationSyntax>())
         {
