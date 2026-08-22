@@ -29,6 +29,7 @@ public static class SessionSymbolDetector
         "System.Web.SessionState.HttpSessionStateBase",
         "System.Web.SessionState.HttpSessionStateWrapper",
         "System.Web.SessionState.IHttpSessionState",
+        "System.Web.HttpSessionStateBase"
     };
 
     /// <summary>

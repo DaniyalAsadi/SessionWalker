@@ -291,32 +291,14 @@ public sealed class RoslynWorkspaceLoader : IDisposable
         }
         catch (ReflectionTypeLoadException ex)
         {
-            Console.Error.WriteLine(ex);
-
-            foreach (var loaderException in ex.LoaderExceptions)
+            if (verbose)
             {
-                Console.Error.WriteLine("--------------------------------------------------");
-                Console.Error.WriteLine(loaderException?.GetType().FullName);
-                Console.Error.WriteLine(loaderException?.Message);
+                Console.Error.WriteLine(ex);
 
-                if (loaderException is FileLoadException fileLoadException)
-                {
-                    Console.Error.WriteLine($"FileName: {fileLoadException.FileName}");
-                    Console.Error.WriteLine($"FusionLog: {fileLoadException.FusionLog}");
-                }
-
-                if (loaderException is FileNotFoundException fileNotFoundException)
-                {
-                    Console.Error.WriteLine($"FileName: {fileNotFoundException.FileName}");
-                    Console.Error.WriteLine($"FusionLog: {fileNotFoundException.FusionLog}");
-                }
+                foreach (var loaderException in ex.LoaderExceptions)
+                    Console.Error.WriteLine(loaderException);
             }
 
-            throw;
-        }
-        catch (Exception e)
-        {
-            Console.WriteLine(e);
             throw;
         }
 

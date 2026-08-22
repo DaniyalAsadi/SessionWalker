@@ -54,6 +54,11 @@ public sealed class SessionUsageAnalyzer : ICodeAnalyzer
             {
                 continue;
             }
+            if (tree.FilePath.Contains("AController.cs", StringComparison.Ordinal))
+            {
+                Console.Error.WriteLine($"FOUND TEST FILE: {tree.FilePath}");
+            }
+
 
             SyntaxNode root;
             try
@@ -197,6 +202,7 @@ public sealed class SessionUsageAnalyzer : ICodeAnalyzer
         List<RawOperation> raw,
         CancellationToken cancellationToken)
     {
+
         if (!SessionSymbolDetector.MatchesByType(model, elementAccess.Expression))
         {
             return;
@@ -231,6 +237,16 @@ public sealed class SessionUsageAnalyzer : ICodeAnalyzer
         List<RawOperation> raw,
         CancellationToken cancellationToken)
     {
+        if (tree.FilePath.Contains("AController.cs", StringComparison.OrdinalIgnoreCase))
+        {
+            var typeInfo = model.GetTypeInfo(memberAccess.Expression);
+            var symbolInfo2 = model.GetSymbolInfo(memberAccess.Expression);
+
+            Console.Error.WriteLine($"Expression: {memberAccess.Expression}");
+            Console.Error.WriteLine($"Type: {typeInfo.Type?.ToDisplayString() ?? "<null>"}");
+            Console.Error.WriteLine($"ConvertedType: {typeInfo.ConvertedType?.ToDisplayString() ?? "<null>"}");
+            Console.Error.WriteLine($"Symbol: {symbolInfo2.Symbol?.ToDisplayString() ?? "<null>"}");
+        }
         if (!SessionSymbolDetector.MatchesByType(model, memberAccess.Expression))
         {
             return false;
