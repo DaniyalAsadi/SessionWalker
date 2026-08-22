@@ -1,12 +1,5 @@
-﻿using System;
-using System.Collections.Generic;
-using System.IO;
-using System.Linq;
-using System.Threading;
-using System.Threading.Tasks;
 using SessionWalker.Cli;
 using SessionWalker.Core.Interfaces;
-using SessionWalker.Infrastructure;
 using SessionWalker.Infrastructure.Output;
 
 namespace SessionWalker
@@ -52,7 +45,6 @@ namespace SessionWalker
 
             try
             {
-                MsBuildBootstrapper.Register();
                 var orchestrator = new AnalysisOrchestrator();
                 var result = await orchestrator.RunAsync(options, cts.Token);
 
@@ -116,11 +108,11 @@ namespace SessionWalker
             static void PrintUsage()
             {
                 Console.WriteLine("""
-    CSharpWalker - Roslyn-based ASP.NET Session usage analyzer
+    SessionWalker - Roslyn-based ASP.NET Session usage analyzer
 
     Usage:
-      CSharpWalker analyze <Solution.sln> [options]
-      CSharpWalker list-analyzers
+      SessionWalker analyze <Solution.sln|Project.csproj> [options]
+      SessionWalker list-analyzers
 
     Options:
       --session            Only report actions/operations that touch Session
@@ -129,7 +121,7 @@ namespace SessionWalker
       --controller-only    Only report actions belonging to MVC controllers
       --json <path>        Write JSON output to <path>
       --csv <path>         Write CSV output to <path>
-      --verbose             Print MSBuild load progress and extra diagnostics
+      --verbose            Print project load progress and extra diagnostics
     """);
             }
 

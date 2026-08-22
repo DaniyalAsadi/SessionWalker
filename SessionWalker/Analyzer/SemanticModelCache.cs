@@ -1,6 +1,6 @@
-using System.Collections.Concurrent;
 using Microsoft.CodeAnalysis;
 using SessionWalker.Core.Interfaces;
+using System.Collections.Concurrent;
 
 namespace SessionWalker.Analyzer;
 
