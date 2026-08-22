@@ -2,6 +2,7 @@ using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.Text;
 using SessionWalker.Infrastructure.ProjectSystem;
+using System.Reflection;
 
 namespace SessionWalker.Infrastructure;
 
@@ -276,13 +277,48 @@ public sealed class RoslynWorkspaceLoader : IDisposable
             }
         }
 
-        _workspace = new AdhocWorkspace();
+        Solution? solution;
+        try
+        {
+            _workspace = new AdhocWorkspace();
 
-        var solution = _workspace.AddSolution(SolutionInfo.Create(
-            SolutionId.CreateNewId(Path.GetFileNameWithoutExtension(solutionPath)),
-            VersionStamp.Create(),
-            filePath: solutionPath,
-            projects: projectInfoList));
+            solution = _workspace.AddSolution(SolutionInfo.Create(
+                SolutionId.CreateNewId(Path.GetFileNameWithoutExtension(solutionPath)),
+                VersionStamp.Create(),
+                filePath: solutionPath,
+                projects: projectInfoList));
+
+        }
+        catch (ReflectionTypeLoadException ex)
+        {
+            Console.Error.WriteLine(ex);
+
+            foreach (var loaderException in ex.LoaderExceptions)
+            {
+                Console.Error.WriteLine("--------------------------------------------------");
+                Console.Error.WriteLine(loaderException?.GetType().FullName);
+                Console.Error.WriteLine(loaderException?.Message);
+
+                if (loaderException is FileLoadException fileLoadException)
+                {
+                    Console.Error.WriteLine($"FileName: {fileLoadException.FileName}");
+                    Console.Error.WriteLine($"FusionLog: {fileLoadException.FusionLog}");
+                }
+
+                if (loaderException is FileNotFoundException fileNotFoundException)
+                {
+                    Console.Error.WriteLine($"FileName: {fileNotFoundException.FileName}");
+                    Console.Error.WriteLine($"FusionLog: {fileNotFoundException.FusionLog}");
+                }
+            }
+
+            throw;
+        }
+        catch (Exception e)
+        {
+            Console.WriteLine(e);
+            throw;
+        }
 
         return Task.FromResult(new LoadResult(solution, diagnostics));
     }
