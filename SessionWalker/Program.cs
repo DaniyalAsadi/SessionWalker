@@ -1,5 +1,7 @@
 using SessionWalker.Cli;
 using SessionWalker.Core.Interfaces;
+using SessionWalker.Dashboard;
+using SessionWalker.Dashboard.Export;
 using SessionWalker.Infrastructure.Output;
 
 namespace SessionWalker
@@ -79,6 +81,27 @@ namespace SessionWalker
                     Console.WriteLine($"Wrote {writer.FormatName.ToUpperInvariant()} output to: {destination}");
                 }
 
+                // Dashboard and Excel consume the single AnalysisResult computed
+                // above; neither re-runs the Roslyn analysis.
+                if (!string.IsNullOrEmpty(options.DashboardOutputPath) || !string.IsNullOrEmpty(options.ExcelOutputPath))
+                {
+                    var dashboardModel = DashboardModelBuilder.Build(result);
+
+                    if (!string.IsNullOrEmpty(options.DashboardOutputPath))
+                    {
+                        var dashboardWriter = new HtmlDashboardWriter();
+                        await dashboardWriter.WriteAsync(dashboardModel, options.DashboardOutputPath, cts.Token);
+                        Console.WriteLine($"Wrote HTML dashboard to: {options.DashboardOutputPath}");
+                    }
+
+                    if (!string.IsNullOrEmpty(options.ExcelOutputPath))
+                    {
+                        var excelExport = new ExcelExportService();
+                        await excelExport.ExportAsync(dashboardModel, options.ExcelOutputPath, cts.Token);
+                        Console.WriteLine($"Wrote Excel to-do workbook to: {options.ExcelOutputPath}");
+                    }
+                }
+
                 var totalDiagnostics = result.Projects.Sum(p => p.Diagnostics.Count);
                 if (totalDiagnostics > 0)
                 {
@@ -121,6 +144,8 @@ namespace SessionWalker
       --controller-only    Only report actions belonging to MVC controllers
       --json <path>        Write JSON output to <path>
       --csv <path>         Write CSV output to <path>
+      --dashboard <path>   Write a self-contained HTML analysis dashboard to <path>
+      --excel <path>       Write an Excel (.xlsx) developer to-do workbook to <path>
       --verbose            Print project load progress and extra diagnostics
     """);
             }

@@ -1,4 +1,5 @@
 using Microsoft.CodeAnalysis;
+using SessionWalker.Core.Models;
 
 namespace SessionWalker.Analyzer;
 
@@ -16,6 +17,24 @@ namespace SessionWalker.Analyzer;
 /// </summary>
 public static class SessionSymbolDetector
 {
+    /// <summary>
+    /// Outcome of evaluating one expression against the known Session type
+    /// mapping. <see cref="IsMatch"/> is the decision the analyzer uses;
+    /// the remaining fields exist purely so callers can explain a rejection
+    /// (used for dashboard diagnostics, never for detection).
+    /// </summary>
+    public sealed record TypeMatchOutcome(
+        bool IsMatch,
+        ITypeSymbol? Type,
+        ITypeSymbol? ConvertedType,
+        SessionTypeRejectionReason RejectionReason)
+    {
+        public bool IsMatch { get; } = IsMatch;
+        public ITypeSymbol? Type { get; } = Type;
+        public ITypeSymbol? ConvertedType { get; } = ConvertedType;
+        public SessionTypeRejectionReason RejectionReason { get; } = RejectionReason;
+    }
+
     /// <summary>
     /// Fully-qualified metadata names of types that represent ASP.NET Session
     /// state. HttpSessionState is the concrete runtime type used by classic
@@ -91,9 +110,32 @@ public static class SessionSymbolDetector
     /// expression's type cannot be determined — callers should treat that as
     /// "not provably Session" rather than guessing.
     /// </summary>
-    public static bool MatchesByType(SemanticModel semanticModel, Microsoft.CodeAnalysis.CSharp.Syntax.ExpressionSyntax expression)
+    public static bool MatchesByType(SemanticModel semanticModel, Microsoft.CodeAnalysis.CSharp.Syntax.ExpressionSyntax expression) =>
+        Evaluate(semanticModel, expression).IsMatch;
+
+    /// <summary>
+    /// Same decision as <see cref="MatchesByType(SemanticModel, ExpressionSyntax)"/>
+    /// plus diagnostics about *why* a non-match happened. Kept separate from
+    /// the boolean check so the detection rule itself stays a single,
+    /// well-defined predicate and rejection recording can be added without
+    /// changing what is detected.
+    /// </summary>
+    public static TypeMatchOutcome Evaluate(SemanticModel semanticModel, Microsoft.CodeAnalysis.CSharp.Syntax.ExpressionSyntax expression)
     {
         var typeInfo = semanticModel.GetTypeInfo(expression);
-        return MatchesByType(typeInfo.Type) || MatchesByType(typeInfo.ConvertedType);
+        var type = typeInfo.Type;
+        var convertedType = typeInfo.ConvertedType;
+
+        if (MatchesByType(type) || MatchesByType(convertedType))
+        {
+            return new TypeMatchOutcome(true, type, convertedType, SessionTypeRejectionReason.None);
+        }
+
+        var resolved = type ?? convertedType;
+        var reason = resolved is null || resolved.TypeKind == TypeKind.Error || resolved is IErrorTypeSymbol
+            ? SessionTypeRejectionReason.TypeNotResolved
+            : SessionTypeRejectionReason.UnsupportedSessionTypeMapping;
+
+        return new TypeMatchOutcome(false, type, convertedType, reason);
     }
 }

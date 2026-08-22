@@ -9,8 +9,10 @@ namespace SessionWalker.Analyzer;
 /// </summary>
 public sealed record SessionAnalyzerResult(
     IReadOnlyList<SessionOperationResult> AllOperations,
-    IReadOnlyList<ControllerAnalysisResult> Controllers)
+    IReadOnlyList<ControllerAnalysisResult> Controllers,
+    IReadOnlyList<RejectedCandidate> RejectedCandidates)
 {
     public IReadOnlyList<SessionOperationResult> AllOperations { get; } = AllOperations;
     public IReadOnlyList<ControllerAnalysisResult> Controllers { get; } = Controllers;
+    public IReadOnlyList<RejectedCandidate> RejectedCandidates { get; } = RejectedCandidates;
 }

@@ -73,13 +73,24 @@ public sealed record ControllerAnalysisResult(
 /// Aggregation of all controllers/operations discovered within one C# project
 /// (one .csproj) inside the analyzed solution.
 /// </summary>
+/// <remarks>
+/// The trailing fields are observational metadata added for the dashboard:
+/// they carry no detection semantics and existing consumers that only use
+/// the first six parameters keep working unchanged.
+/// </remarks>
 public sealed record ProjectAnalysisResult(
     string ProjectName,
     string AssemblyName,
     string ProjectFilePath,
     IReadOnlyList<ControllerAnalysisResult> Controllers,
     IReadOnlyList<SessionOperationResult> AllSessionOperations,
-    IReadOnlyList<string> Diagnostics)
+    IReadOnlyList<string> Diagnostics,
+    int DocumentCount = 0,
+    int CompilationErrorCount = 0,
+    int CompilationWarningCount = 0,
+    IReadOnlyList<string>? Warnings = null,
+    IReadOnlyList<RejectedCandidate>? RejectedCandidates = null,
+    bool CompilationSucceeded = true)
 {
     public string ProjectName { get; set; } = ProjectName;
     public string AssemblyName { get; set; } = AssemblyName;
@@ -87,6 +98,18 @@ public sealed record ProjectAnalysisResult(
     public IReadOnlyList<ControllerAnalysisResult> Controllers { get; set; } = Controllers;
     public IReadOnlyList<SessionOperationResult> AllSessionOperations { get; set; } = AllSessionOperations;
     public IReadOnlyList<string> Diagnostics { get; set; } = Diagnostics;
+    public int DocumentCount { get; set; } = DocumentCount;
+    public int CompilationErrorCount { get; set; } = CompilationErrorCount;
+    public int CompilationWarningCount { get; set; } = CompilationWarningCount;
+    public IReadOnlyList<string>? Warnings { get; set; } = Warnings;
+    public IReadOnlyList<RejectedCandidate>? RejectedCandidates { get; set; } = RejectedCandidates;
+    public bool CompilationSucceeded { get; set; } = CompilationSucceeded;
+
+    /// <summary>Non-null view of <see cref="Warnings"/> for consumers that prefer not to null-check.</summary>
+    public IReadOnlyList<string> WarningList => Warnings ?? Array.Empty<string>();
+
+    /// <summary>Non-null view of <see cref="RejectedCandidates"/> for consumers that prefer not to null-check.</summary>
+    public IReadOnlyList<RejectedCandidate> RejectedCandidateList => RejectedCandidates ?? Array.Empty<RejectedCandidate>();
 }
 
 /// <summary>

@@ -33,6 +33,12 @@ public sealed class CliOptions
 
     public string CsvOutputPath { get; private set; }
 
+    /// <summary>Destination for the self-contained HTML analysis dashboard.</summary>
+    public string DashboardOutputPath { get; private set; }
+
+    /// <summary>Destination for the Excel (xlsx) developer to-do workbook.</summary>
+    public string ExcelOutputPath { get; private set; }
+
     public static CliOptions Parse(string[] args, out string error)
     {
         error = null;
@@ -64,7 +70,7 @@ public sealed class CliOptions
 
         var solutionPath = args[1];
         bool sessionOnly = false, sessionWriteOnly = false, controllerOnly = false, verbose = false;
-        string projectFilter = null, jsonPath = null, csvPath = null;
+        string projectFilter = null, jsonPath = null, csvPath = null, dashboardPath = null, excelPath = null;
 
         for (var i = 2; i < args.Length; i++)
         {
@@ -106,6 +112,22 @@ public sealed class CliOptions
                     }
                     csvPath = args[++i];
                     break;
+                case "--dashboard":
+                    if (i + 1 >= args.Length)
+                    {
+                        error = "--dashboard requires an output file path.";
+                        return null;
+                    }
+                    dashboardPath = args[++i];
+                    break;
+                case "--excel":
+                    if (i + 1 >= args.Length)
+                    {
+                        error = "--excel requires an output file path.";
+                        return null;
+                    }
+                    excelPath = args[++i];
+                    break;
                 default:
                     error = $"Unrecognized argument '{args[i]}'.";
                     return null;
@@ -122,7 +144,9 @@ public sealed class CliOptions
             Verbose = verbose,
             ProjectFilter = projectFilter,
             JsonOutputPath = jsonPath,
-            CsvOutputPath = csvPath
+            CsvOutputPath = csvPath,
+            DashboardOutputPath = dashboardPath,
+            ExcelOutputPath = excelPath
         };
     }
 }

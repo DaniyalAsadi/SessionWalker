@@ -37,12 +37,22 @@ public sealed class SessionUsageAnalyzer : ICodeAnalyzer
     public string Description =>
         "Detects direct, indirect and interprocedural reads/writes of ASP.NET Session state (System.Web.SessionState.*) using Roslyn semantic analysis.";
 
+    /// <summary>
+    /// Upper bound on recorded rejection observations per project. This is a
+    /// diagnostics-visibility cap only; it never affects what is detected.
+    /// </summary>
+    private const int MaxRejectedCandidates = 5000;
+
+    private bool _rejectionTruncationReported;
+
     public async Task<AnalyzerResult> AnalyzeAsync(AnalysisContext context, CancellationToken cancellationToken)
     {
         var compilation = context.Compilation;
         var controllerBase = ControllerActionDetector.GetControllerBaseSymbol(compilation);
         var tracer = new HelperMethodTracer(context.Solution, context.SemanticModelCache);
         var diagnostics = new List<string>();
+        var rejectedCandidates = new List<RejectedCandidate>();
+        _rejectionTruncationReported = false;
 
         var raw = new List<RawOperation>();
 
@@ -54,11 +64,6 @@ public sealed class SessionUsageAnalyzer : ICodeAnalyzer
             {
                 continue;
             }
-            if (tree.FilePath.Contains("AController.cs", StringComparison.Ordinal))
-            {
-                Console.Error.WriteLine($"FOUND TEST FILE: {tree.FilePath}");
-            }
-
 
             SyntaxNode root;
             try
@@ -82,15 +87,25 @@ public sealed class SessionUsageAnalyzer : ICodeAnalyzer
                 controllerBase,
                 tracer,
                 raw,
+                rejectedCandidates,
                 diagnostics,
                 cancellationToken).ConfigureAwait(false);
+        }
+
+        if (rejectedCandidates.Count >= MaxRejectedCandidates && !_rejectionTruncationReported)
+        {
+            _rejectionTruncationReported = true;
+            diagnostics.Add(
+                $"Rejected-candidate observations were truncated after {MaxRejectedCandidates} entries; " +
+                $"full detection results are unaffected.");
         }
 
         var controllers = ActionSessionSummaryBuilder.Build(compilation, context.Project.Name, controllerBase, raw, cancellationToken, context.SemanticModelCache);
 
         var payload = new SessionAnalyzerResult(
             raw.Select(r => r.Result).ToList(),
-            controllers);
+            controllers,
+            rejectedCandidates);
 
         return new AnalyzerResult(Name, payload, diagnostics);
     }
@@ -104,6 +119,7 @@ public sealed class SessionUsageAnalyzer : ICodeAnalyzer
         INamedTypeSymbol controllerBase,
         HelperMethodTracer tracer,
         List<RawOperation> raw,
+        List<RejectedCandidate> rejectedCandidates,
         List<string> diagnostics,
         CancellationToken cancellationToken)
     {
@@ -120,12 +136,12 @@ public sealed class SessionUsageAnalyzer : ICodeAnalyzer
             switch (node)
             {
                 case ElementAccessExpressionSyntax elementAccess:
-                    TryHandleElementAccess(context, compilation, tree, model, controllerBase, elementAccess, raw, cancellationToken);
+                    TryHandleElementAccess(context, compilation, tree, model, controllerBase, elementAccess, raw, rejectedCandidates, cancellationToken);
                     break;
 
                 case InvocationExpressionSyntax invocation when invocation.Expression is MemberAccessExpressionSyntax memberAccess
                     && SessionSymbolDetector.MutatingMethodNames.Contains(memberAccess.Name.Identifier.ValueText):
-                    if (TryHandleMutatingInvocation(context, compilation, tree, model, controllerBase, invocation, memberAccess, raw, cancellationToken))
+                    if (TryHandleMutatingInvocation(context, compilation, tree, model, controllerBase, invocation, memberAccess, raw, rejectedCandidates, cancellationToken))
                     {
                         alreadyHandledInvocations.Add(invocation);
                     }
@@ -192,7 +208,7 @@ public sealed class SessionUsageAnalyzer : ICodeAnalyzer
         }
     }
 
-    private static void TryHandleElementAccess(
+    private void TryHandleElementAccess(
         AnalysisContext context,
         Compilation compilation,
         SyntaxTree tree,
@@ -200,11 +216,19 @@ public sealed class SessionUsageAnalyzer : ICodeAnalyzer
         INamedTypeSymbol controllerBase,
         ElementAccessExpressionSyntax elementAccess,
         List<RawOperation> raw,
+        List<RejectedCandidate> rejectedCandidates,
         CancellationToken cancellationToken)
     {
-
-        if (!SessionSymbolDetector.MatchesByType(model, elementAccess.Expression))
+        var outcome = SessionSymbolDetector.Evaluate(model, elementAccess.Expression);
+        if (!outcome.IsMatch)
         {
+            // Observation-only: record rejections that a developer would read
+            // as Session access (Session|HttpContext.Session|_session[...]).
+            // Every other indexer is silently skipped, exactly as before.
+            if (LooksLikeSessionAccess(elementAccess.Expression))
+            {
+                RecordRejectedCandidate(context, compilation, tree, model, controllerBase, elementAccess, outcome, rejectedCandidates, cancellationToken);
+            }
             return;
         }
 
@@ -226,7 +250,7 @@ public sealed class SessionUsageAnalyzer : ICodeAnalyzer
         raw.Add(new RawOperation(result, containingMethod, containingClass));
     }
 
-    private static bool TryHandleMutatingInvocation(
+    private bool TryHandleMutatingInvocation(
         AnalysisContext context,
         Compilation compilation,
         SyntaxTree tree,
@@ -235,20 +259,16 @@ public sealed class SessionUsageAnalyzer : ICodeAnalyzer
         InvocationExpressionSyntax invocation,
         MemberAccessExpressionSyntax memberAccess,
         List<RawOperation> raw,
+        List<RejectedCandidate> rejectedCandidates,
         CancellationToken cancellationToken)
     {
-        if (tree.FilePath.Contains("AController.cs", StringComparison.OrdinalIgnoreCase))
+        var outcome = SessionSymbolDetector.Evaluate(model, memberAccess.Expression);
+        if (!outcome.IsMatch)
         {
-            var typeInfo = model.GetTypeInfo(memberAccess.Expression);
-            var symbolInfo2 = model.GetSymbolInfo(memberAccess.Expression);
-
-            Console.Error.WriteLine($"Expression: {memberAccess.Expression}");
-            Console.Error.WriteLine($"Type: {typeInfo.Type?.ToDisplayString() ?? "<null>"}");
-            Console.Error.WriteLine($"ConvertedType: {typeInfo.ConvertedType?.ToDisplayString() ?? "<null>"}");
-            Console.Error.WriteLine($"Symbol: {symbolInfo2.Symbol?.ToDisplayString() ?? "<null>"}");
-        }
-        if (!SessionSymbolDetector.MatchesByType(model, memberAccess.Expression))
-        {
+            if (LooksLikeSessionAccess(memberAccess.Expression))
+            {
+                RecordRejectedCandidate(context, compilation, tree, model, controllerBase, invocation, outcome, rejectedCandidates, cancellationToken);
+            }
             return false;
         }
 
@@ -271,6 +291,60 @@ public sealed class SessionUsageAnalyzer : ICodeAnalyzer
         raw.Add(new RawOperation(result, containingMethod, containingClass));
         return true;
     }
+
+    private void RecordRejectedCandidate(
+        AnalysisContext context,
+        Compilation compilation,
+        SyntaxTree tree,
+        SemanticModel model,
+        INamedTypeSymbol controllerBase,
+        SyntaxNode node,
+        SessionSymbolDetector.TypeMatchOutcome outcome,
+        List<RejectedCandidate> rejectedCandidates,
+        CancellationToken cancellationToken)
+    {
+        if (rejectedCandidates.Count >= MaxRejectedCandidates)
+        {
+            return;
+        }
+
+        var symbolInfo = BuildSymbolInfo(context, compilation, tree, model, node, controllerBase, cancellationToken, out _, out _);
+        var location = ToSourceLocation(context.Project, tree, node.Span);
+        var displayType = outcome.Type?.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat) ?? "<unknown>";
+        var displayConvertedType = outcome.ConvertedType?.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat) ?? string.Empty;
+
+        rejectedCandidates.Add(new RejectedCandidate(
+            Expression: Truncate(node.ToString()),
+            ResolvedType: displayType,
+            ConvertedType: displayConvertedType,
+            Reason: outcome.RejectionReason,
+            Location: location,
+            Symbol: symbolInfo,
+            Note: $"Syntactically Session-like expression was evaluated by {nameof(SessionSymbolDetector)} " +
+                  "but its type is not in the known Session type mapping."));
+    }
+
+    /// <summary>
+    /// Syntactic hint that an expression is *meant* to be Session access
+    /// (Session, HttpContext.Session, _session, ...). Used only to decide
+    /// which rejected candidates to surface for diagnosis; it never affects
+    /// whether something is detected.
+    /// </summary>
+    private static bool LooksLikeSessionAccess(ExpressionSyntax receiver)
+    {
+        return receiver switch
+        {
+            IdentifierNameSyntax identifier =>
+                IsSessionLikeName(identifier.Identifier.ValueText),
+            MemberAccessExpressionSyntax member =>
+                IsSessionLikeName(member.Name.Identifier.ValueText),
+            _ => false
+        };
+    }
+
+    private static bool IsSessionLikeName(string name) =>
+        string.Equals(name, "Session", StringComparison.OrdinalIgnoreCase) ||
+        name.StartsWith("_session", StringComparison.OrdinalIgnoreCase);
 
     private static AccessPath DetermineAccessPath(SemanticModel model, ExpressionSyntax receiver)
     {

@@ -41,6 +41,7 @@
   <ItemGroup>
     <Reference Include="System" />
     <Reference Include="System.Core" />
+    <Reference Include="System.IO.Compression" />
     <Reference Include="System.Numerics" />
     <Reference Include="System.Xml.Linq" />
     <Reference Include="System.Data.DataSetExtensions" />
@@ -63,9 +64,15 @@
     <Compile Include="Core\Interfaces\IOutputWriter.cs" />
     <Compile Include="Core\Models\ActionAnalysisResult.cs" />
     <Compile Include="Core\Models\Enums.cs" />
+    <Compile Include="Core\Models\RejectedCandidate.cs" />
     <Compile Include="Core\Models\SessionOperationResult.cs" />
     <Compile Include="Core\Models\SourceLocation.cs" />
     <Compile Include="Core\Models\SymbolInfo.cs" />
+    <Compile Include="Dashboard\DashboardModelBuilder.cs" />
+    <Compile Include="Dashboard\Export\ExcelExportService.cs" />
+    <Compile Include="Dashboard\Export\XlsxWorkbook.cs" />
+    <Compile Include="Dashboard\HtmlDashboardWriter.cs" />
+    <Compile Include="Dashboard\Models\DashboardModels.cs" />
     <Compile Include="GlobalUsings.cs" />
     <Compile Include="Infrastructure\Output\ConsoleOutputWriter.cs" />
     <Compile Include="Infrastructure\Output\CsvOutputWriter.cs" />

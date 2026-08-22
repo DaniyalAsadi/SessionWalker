@@ -57,6 +57,14 @@ public sealed class AnalysisOrchestrator
 
             var diagnostics = new List<string>(loadResult.Diagnostics);
 
+            // The loader may synthesize one virtual document for implicit
+            // global usings; exclude it from the developer-facing count.
+            var documentCount = project.Documents.Count(d =>
+                !string.Equals(
+                    Path.GetFileName(d.FilePath),
+                    "SessionWalker.ImplicitGlobalUsings.g.cs",
+                    StringComparison.OrdinalIgnoreCase));
+
             Compilation? compilation;
             try
             {
@@ -69,22 +77,42 @@ public sealed class AnalysisOrchestrator
             catch (Exception ex)
             {
                 diagnostics.Add($"Failed to compile project '{project.Name}': {ex.Message}");
-                projectResults.Add(new ProjectAnalysisResult(project.Name, project.AssemblyName, project.FilePath ?? string.Empty, Array.Empty<ControllerAnalysisResult>(), Array.Empty<SessionOperationResult>(), diagnostics));
+                projectResults.Add(new ProjectAnalysisResult(
+                    project.Name,
+                    project.AssemblyName,
+                    project.FilePath ?? string.Empty,
+                    Array.Empty<ControllerAnalysisResult>(),
+                    Array.Empty<SessionOperationResult>(),
+                    diagnostics,
+                    DocumentCount: documentCount,
+                    CompilationSucceeded: false));
                 continue;
             }
 
             if (compilation is null)
             {
                 diagnostics.Add($"Project '{project.Name}' produced no compilation (unsupported project type or load failure).");
-                projectResults.Add(new ProjectAnalysisResult(project.Name, project.AssemblyName, project.FilePath ?? string.Empty, Array.Empty<ControllerAnalysisResult>(), Array.Empty<SessionOperationResult>(), diagnostics));
+                projectResults.Add(new ProjectAnalysisResult(
+                    project.Name,
+                    project.AssemblyName,
+                    project.FilePath ?? string.Empty,
+                    Array.Empty<ControllerAnalysisResult>(),
+                    Array.Empty<SessionOperationResult>(),
+                    diagnostics,
+                    DocumentCount: documentCount,
+                    CompilationSucceeded: false));
                 continue;
             }
 
-            var compileErrors = compilation.GetDiagnostics(cancellationToken)
+            var compilationDiagnostics = compilation.GetDiagnostics(cancellationToken).ToList();
+            var compileErrors = compilationDiagnostics
                 .Where(d => d.Severity == DiagnosticSeverity.Error)
-                .Take(25)
-                .Select(d => d.ToString());
-            diagnostics.AddRange(compileErrors);
+                .ToList();
+            var compileWarnings = compilationDiagnostics
+                .Where(d => d.Severity == DiagnosticSeverity.Warning)
+                .ToList();
+
+            diagnostics.AddRange(compileErrors.Take(25).Select(d => d.ToString()));
 
             var context = new AnalysisContext
             {
@@ -97,6 +125,7 @@ public sealed class AnalysisOrchestrator
 
             var allOperations = new List<SessionOperationResult>();
             var allControllers = new List<ControllerAnalysisResult>();
+            var allRejectedCandidates = new List<RejectedCandidate>();
 
             foreach (var analyzer in analyzers)
             {
@@ -123,6 +152,7 @@ public sealed class AnalysisOrchestrator
                 {
                     allOperations.AddRange(sessionResult.AllOperations);
                     allControllers.AddRange(sessionResult.Controllers);
+                    allRejectedCandidates.AddRange(sessionResult.RejectedCandidates);
                 }
             }
 
@@ -132,7 +162,13 @@ public sealed class AnalysisOrchestrator
                 project.FilePath ?? string.Empty,
                 allControllers,
                 allOperations,
-                diagnostics));
+                diagnostics,
+                DocumentCount: documentCount,
+                CompilationErrorCount: compileErrors.Count,
+                CompilationWarningCount: compileWarnings.Count,
+                Warnings: compileWarnings.Take(25).Select(d => d.ToString()).ToList(),
+                RejectedCandidates: allRejectedCandidates,
+                CompilationSucceeded: true));
         }
 
         var result = new AnalysisResult(options.SolutionPath!, DateTimeOffset.UtcNow, projectResults);
