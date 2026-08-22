@@ -1,5 +1,6 @@
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
+using SessionWalker.Core.Interfaces;
 using SessionWalker.Core.Models;
 
 namespace SessionWalker.Analyzer;
@@ -18,9 +19,10 @@ public static class ActionSessionSummaryBuilder
         string projectName,
         INamedTypeSymbol controllerBase,
         IReadOnlyList<SessionUsageAnalyzer.RawOperation> rawOperations,
-        CancellationToken cancellationToken)
+        CancellationToken cancellationToken,
+        ISemanticModelCache? semanticModelCache = null)
     {
-        var controllers = ControllerActionDetector.FindControllers(compilation, cancellationToken).ToList();
+        var controllers = ControllerActionDetector.FindControllers(compilation, cancellationToken, semanticModelCache).ToList();
         if (controllers.Count == 0)
         {
             return [];
@@ -54,7 +56,7 @@ public static class ActionSessionSummaryBuilder
 
             var actions = new List<ActionAnalysisResult>();
 
-            foreach (var action in ControllerActionDetector.FindActions(compilation, controller, cancellationToken))
+            foreach (var action in ControllerActionDetector.FindActions(compilation, controller, cancellationToken, semanticModelCache))
             {
                 var operations = opsByMethod.TryGetValue(action.Symbol, out var list)
                     ? list
