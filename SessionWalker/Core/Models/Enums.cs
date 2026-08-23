@@ -62,5 +62,6 @@ public enum AccessPath
     Direct,
     LocalVariableIndirection,
     MethodParameter,
-    InterproceduralCall
+    InterproceduralCall,
+    PropertySetter
 }

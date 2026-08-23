@@ -16,7 +16,8 @@ public sealed class AnalysisOrchestrator
 {
     public static IReadOnlyList<ICodeAnalyzer> CreateAnalyzers() => new ICodeAnalyzer[]
     {
-        new SessionUsageAnalyzer()
+        new SessionUsageAnalyzer(),
+        new SessionPropertySetterAnalyzer()
         // Future: new ViewBagAnalyzer(), new TempDataAnalyzer(), new HttpContextAnalyzer(), ...
     };
 

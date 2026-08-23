@@ -12,7 +12,9 @@
   </PropertyGroup>
   <ItemGroup>
     <Compile Include="Controllers\BAController.cs" />
+    <Compile Include="Controllers\AccountController.cs" />
     <Compile Include="Helpers\LoginHelper.cs" />
+    <Compile Include="Models\UserContext.cs" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\DemoShared\DemoShared.csproj" />
