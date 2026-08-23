@@ -58,6 +58,7 @@
     <Compile Include="Analyzer\SessionAnalyzerResult.cs" />
     <Compile Include="Analyzer\SessionSymbolDetector.cs" />
     <Compile Include="Analyzer\SessionUsageAnalyzer.cs" />
+    <Compile Include="Analyzer\SessionPropertySetterAnalyzer.cs" />
     <Compile Include="Cli\AnalysisOrchestrator.cs" />
     <Compile Include="Cli\CliOptions.cs" />
     <Compile Include="Core\Interfaces\ICodeAnalyzer.cs" />

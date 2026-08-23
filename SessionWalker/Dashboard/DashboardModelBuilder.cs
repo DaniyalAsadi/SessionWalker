@@ -281,6 +281,7 @@ public static class DashboardModelBuilder
             AccessPath.LocalVariableIndirection => "Semantic Symbol Detection (local variable)",
             AccessPath.MethodParameter => "Semantic Symbol Detection (method parameter)",
             AccessPath.InterproceduralCall => "Interprocedural Trace",
+            AccessPath.PropertySetter => "Property Setter Indirection",
             _ => "Semantic Symbol Detection"
         };
     }
