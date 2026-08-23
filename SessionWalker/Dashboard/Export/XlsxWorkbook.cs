@@ -36,7 +36,7 @@ public sealed class XlsxWorkbook : IDisposable
     /// <summary>Cell style for long text columns (wrapped, top-aligned).</summary>
     public const int StyleWrapText = 3;
 
-    private readonly List<XlsxSheetData> _sheets = new List<XlsxSheetData>();
+    private static readonly List<XlsxSheetData> _sheets = new List<XlsxSheetData>();
     private bool _disposed;
 
     public XlsxSheet AddSheet(string name)
@@ -718,7 +718,17 @@ public sealed class XlsxWorkbook : IDisposable
             ColumnStyles is not null && column < ColumnStyles.Length ? ColumnStyles[column] : 0;
     }
 
-    internal sealed record ConditionalRule(int Column, string Operator, string Formula, int StyleIndex);
+    internal sealed record ConditionalRule(
+        int Column,
+        string Operator,
+        string Formula,
+        int StyleIndex)
+    {
+        public int Column { get; } = Column;
+        public string Operator { get; } = Operator;
+        public string Formula { get; } = Formula;
+        public int StyleIndex { get; } = StyleIndex;
+    }
 }
 
 /// <summary>

@@ -18,14 +18,20 @@ public static class ControllerActionDetector
     private const string NonActionAttributeMetadataName = "System.Web.Mvc.NonActionAttribute";
     private const string ChildActionOnlyAttributeMetadataName = "System.Web.Mvc.ChildActionOnlyAttribute";
 
-    public sealed record ControllerCandidate(INamedTypeSymbol Symbol, ClassDeclarationSyntax Declaration, SyntaxTree Tree)
+    public sealed record ControllerCandidate(
+        INamedTypeSymbol Symbol,
+        ClassDeclarationSyntax Declaration,
+        SyntaxTree Tree)
     {
         public INamedTypeSymbol Symbol { get; } = Symbol;
         public ClassDeclarationSyntax Declaration { get; } = Declaration;
         public SyntaxTree Tree { get; } = Tree;
     }
 
-    public sealed record ActionCandidate(IMethodSymbol Symbol, MethodDeclarationSyntax Declaration, SyntaxTree Tree)
+    public sealed record ActionCandidate(
+        IMethodSymbol Symbol,
+        MethodDeclarationSyntax Declaration,
+        SyntaxTree Tree)
     {
         public IMethodSymbol Symbol { get; } = Symbol;
         public MethodDeclarationSyntax Declaration { get; } = Declaration;

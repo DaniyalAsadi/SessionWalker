@@ -492,7 +492,10 @@ public sealed class SessionUsageAnalyzer : ICodeAnalyzer
         return Uri.UnescapeDataString(relativeUri.ToString())
             .Replace('/', Path.DirectorySeparatorChar);
     }
-    public sealed record RawOperation(SessionOperationResult Result, IMethodSymbol ContainingMethod, INamedTypeSymbol ContainingClass)
+    public sealed record RawOperation(
+        SessionOperationResult Result,
+        IMethodSymbol ContainingMethod,
+        INamedTypeSymbol ContainingClass)
     {
         public SessionOperationResult Result { get; } = Result;
         public IMethodSymbol ContainingMethod { get; } = ContainingMethod;

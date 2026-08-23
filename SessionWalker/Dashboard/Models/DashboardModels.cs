@@ -21,7 +21,25 @@ public sealed record SolutionSummaryModel(
     int TotalRejectedDetections,
     int ProjectsWithIssues,
     int ProjectsWithoutSessionUsage,
-    int ProjectsNotAnalyzed);
+    int ProjectsNotAnalyzed)
+{
+    public string SolutionName { get; } = SolutionName;
+    public string SolutionPath { get; } = SolutionPath;
+    public DateTimeOffset AnalyzedAtUtc { get; } = AnalyzedAtUtc;
+    public int TotalProjects { get; } = TotalProjects;
+    public int TotalDocuments { get; } = TotalDocuments;
+    public int TotalControllers { get; } = TotalControllers;
+    public int TotalActions { get; } = TotalActions;
+    public int TotalActionsWithSession { get; } = TotalActionsWithSession;
+    public int TotalSessionOperations { get; } = TotalSessionOperations;
+    public int TotalDiagnostics { get; } = TotalDiagnostics;
+    public int TotalCompilationErrors { get; } = TotalCompilationErrors;
+    public int TotalWarnings { get; } = TotalWarnings;
+    public int TotalRejectedDetections { get; } = TotalRejectedDetections;
+    public int ProjectsWithIssues { get; } = ProjectsWithIssues;
+    public int ProjectsWithoutSessionUsage { get; } = ProjectsWithoutSessionUsage;
+    public int ProjectsNotAnalyzed { get; } = ProjectsNotAnalyzed;
+}
 
 /// <summary>
 /// One row of the Project Analysis (health) table.
@@ -43,7 +61,26 @@ public sealed record ProjectSummaryModel(
     bool HasSessionUsage,
     bool HasRejectedDetections,
     bool IsAnalyzed,
-    IReadOnlyList<ControllerDetailModel> ControllerDetails);
+    IReadOnlyList<ControllerDetailModel> ControllerDetails)
+{
+    public string ProjectName { get; } = ProjectName;
+    public string AssemblyName { get; } = AssemblyName;
+    public string ProjectPath { get; } = ProjectPath;
+    public int Documents { get; } = Documents;
+    public int Controllers { get; } = Controllers;
+    public int Actions { get; } = Actions;
+    public int SessionActions { get; } = SessionActions;
+    public int SessionOperations { get; } = SessionOperations;
+    public int CompilationErrors { get; } = CompilationErrors;
+    public int Warnings { get; } = Warnings;
+    public string Status { get; } = Status;
+    public string Priority { get; } = Priority;
+    public string DeveloperAction { get; } = DeveloperAction;
+    public bool HasSessionUsage { get; } = HasSessionUsage;
+    public bool HasRejectedDetections { get; } = HasRejectedDetections;
+    public bool IsAnalyzed { get; } = IsAnalyzed;
+    public IReadOnlyList<ControllerDetailModel> ControllerDetails { get; } = ControllerDetails;
+}
 
 /// <summary>
 /// Full inventory of one controller in a project: every action, whether or
@@ -53,7 +90,12 @@ public sealed record ProjectSummaryModel(
 public sealed record ControllerDetailModel(
     string Controller,
     string File,
-    IReadOnlyList<ActionDetailModel> Actions);
+    IReadOnlyList<ActionDetailModel> Actions)
+{
+    public string Controller { get; } = Controller;
+    public string File { get; } = File;
+    public IReadOnlyList<ActionDetailModel> Actions { get; } = Actions;
+}
 
 /// <summary>
 /// One action with its Session usage summary and the detected operations.
@@ -67,7 +109,18 @@ public sealed record ActionDetailModel(
     int Reads,
     int Writes,
     bool CanBeReadOnly,
-    IReadOnlyList<SessionFindingModel> Operations);
+    IReadOnlyList<SessionFindingModel> Operations)
+{
+    public string Action { get; } = Action;
+    public string File { get; } = File;
+    public int Line { get; } = Line;
+    public int Column { get; } = Column;
+    public int SessionOperations { get; } = SessionOperations;
+    public int Reads { get; } = Reads;
+    public int Writes { get; } = Writes;
+    public bool CanBeReadOnly { get; } = CanBeReadOnly;
+    public IReadOnlyList<SessionFindingModel> Operations { get; } = Operations;
+}
 
 /// <summary>
 /// One detected Session operation, flattened for the Session Detection page
@@ -89,7 +142,25 @@ public sealed record SessionFindingModel(
     string Expression,
     string AccessPath,
     string Note,
-    string CanBeReadOnly);
+    string CanBeReadOnly)
+{
+    public string Project { get; } = Project;
+    public string Controller { get; } = Controller;
+    public string Action { get; } = Action;
+    public string File { get; } = File;
+    public int Line { get; } = Line;
+    public int Column { get; } = Column;
+    public string Operation { get; } = Operation;
+    public string Mutation { get; } = Mutation;
+    public string SessionKey { get; } = SessionKey;
+    public string SessionType { get; } = SessionType;
+    public string DetectionMethod { get; } = DetectionMethod;
+    public string Confidence { get; } = Confidence;
+    public string Expression { get; } = Expression;
+    public string AccessPath { get; } = AccessPath;
+    public string Note { get; } = Note;
+    public string CanBeReadOnly { get; } = CanBeReadOnly;
+}
 
 /// <summary>
 /// One problem surfaced by the run: compile error/warning, reference problem,
@@ -107,7 +178,19 @@ public sealed record DiagnosticItemModel(
     int Column,
     string Impact,
     string SuggestedFix,
-    string Status);
+    string Status)
+{
+    public string Priority { get; } = Priority;
+    public string Project { get; } = Project;
+    public string Category { get; } = Category;
+    public string Message { get; } = Message;
+    public string File { get; } = File;
+    public int Line { get; } = Line;
+    public int Column { get; } = Column;
+    public string Impact { get; } = Impact;
+    public string SuggestedFix { get; } = SuggestedFix;
+    public string Status { get; } = Status;
+}
 
 /// <summary>
 /// Why a developer should open the Investigation page.
@@ -141,7 +224,19 @@ public sealed record InvestigationCaseModel(
     IReadOnlyList<string> Evidence,
     IReadOnlyList<string> PossibleReasons,
     string SuggestedAction,
-    string SuggestedFix);
+    string SuggestedFix)
+{
+    public InvestigationKind Kind { get; } = Kind;
+    public string Title { get; } = Title;
+    public string Project { get; } = Project;
+    public string Component { get; } = Component;
+    public string File { get; } = File;
+    public string Severity { get; } = Severity;
+    public IReadOnlyList<string> Evidence { get; } = Evidence;
+    public IReadOnlyList<string> PossibleReasons { get; } = PossibleReasons;
+    public string SuggestedAction { get; } = SuggestedAction;
+    public string SuggestedFix { get; } = SuggestedFix;
+}
 
 /// <summary>
 /// An actionable, exportable work item. This is the unit consumed by the
@@ -161,7 +256,22 @@ public sealed record TodoItemModel(
     string Status,
     DateTimeOffset CreatedDate,
     DateTimeOffset? CompletedDate,
-    string Notes);
+    string Notes)
+{
+    public string Id { get; } = Id;
+    public string Priority { get; } = Priority;
+    public string Category { get; } = Category;
+    public string Project { get; } = Project;
+    public string Component { get; } = Component;
+    public string Problem { get; } = Problem;
+    public string Evidence { get; } = Evidence;
+    public string SuggestedSolution { get; } = SuggestedSolution;
+    public string Owner { get; } = Owner;
+    public string Status { get; } = Status;
+    public DateTimeOffset CreatedDate { get; } = CreatedDate;
+    public DateTimeOffset? CompletedDate { get; } = CompletedDate;
+    public string Notes { get; } = Notes;
+}
 
 /// <summary>
 /// The complete dashboard/export view model. Built once from
@@ -175,4 +285,12 @@ public sealed record AnalysisDashboardModel(
     IReadOnlyList<SessionFindingModel> SessionFindings,
     IReadOnlyList<DiagnosticItemModel> Diagnostics,
     IReadOnlyList<InvestigationCaseModel> Investigations,
-    IReadOnlyList<TodoItemModel> TodoItems);
+    IReadOnlyList<TodoItemModel> TodoItems)
+{
+    public SolutionSummaryModel Solution { get; } = Solution;
+    public IReadOnlyList<ProjectSummaryModel> Projects { get; } = Projects;
+    public IReadOnlyList<SessionFindingModel> SessionFindings { get; } = SessionFindings;
+    public IReadOnlyList<DiagnosticItemModel> Diagnostics { get; } = Diagnostics;
+    public IReadOnlyList<InvestigationCaseModel> Investigations { get; } = Investigations;
+    public IReadOnlyList<TodoItemModel> TodoItems { get; } = TodoItems;
+}

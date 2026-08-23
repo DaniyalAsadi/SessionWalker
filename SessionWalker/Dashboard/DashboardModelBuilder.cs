@@ -800,8 +800,35 @@ public static class DashboardModelBuilder
         Duplicate
     }
 
-    private sealed record ReferenceProblem(string Name, ReferenceProblemKind Kind, string Evidence);
-    private sealed record TodoInput(string Priority, string Category, string Project, string Component, string Problem, string Evidence, string Solution, string Notes);
+    private sealed record ReferenceProblem(
+        string Name,
+        ReferenceProblemKind Kind,
+        string Evidence)
+    {
+        public string Name { get; } = Name;
+        public ReferenceProblemKind Kind { get; } = Kind;
+        public string Evidence { get; } = Evidence;
+    }
+
+    private sealed record TodoInput(
+        string Priority,
+        string Category,
+        string Project,
+        string Component,
+        string Problem,
+        string Evidence,
+        string Solution,
+        string Notes)
+    {
+        public string Priority { get; } = Priority;
+        public string Category { get; } = Category;
+        public string Project { get; } = Project;
+        public string Component { get; } = Component;
+        public string Problem { get; } = Problem;
+        public string Evidence { get; } = Evidence;
+        public string Solution { get; } = Solution;
+        public string Notes { get; } = Notes;
+    }
 
     private static IReadOnlyList<TodoItemModel> BuildTodoItems(
         AnalysisResult result,
