@@ -839,96 +839,96 @@ public static class DashboardModelBuilder
 
         foreach (var project in result.Projects)
         {
-            foreach (var reference in CollectReferenceProblems(project))
-            {
-                var duplicate = reference.Kind == ReferenceProblemKind.Duplicate;
-                candidates.Add(new TodoInput(
-                    Priority: High,
-                    Category: "Reference Issue",
-                    Project: project.ProjectName,
-                    Component: reference.Name,
-                    Problem: duplicate
-                        ? $"Duplicate assembly '{reference.Name}' causes ambiguous binding"
-                        : $"Reference '{reference.Name}' could not be resolved",
-                    Evidence: reference.Evidence,
-                    Solution: duplicate
-                        ? "Remove the duplicate reference or align assembly versions."
-                        : $"Restore the '{reference.Name}' reference (NuGet restore / HintPath).",
-                    Notes: "Blocking-type issue: detection may be incomplete until resolved."));
-            }
+            //foreach (var reference in CollectReferenceProblems(project))
+            //{
+            //    var duplicate = reference.Kind == ReferenceProblemKind.Duplicate;
+            //    candidates.Add(new TodoInput(
+            //        Priority: High,
+            //        Category: "Reference Issue",
+            //        Project: project.ProjectName,
+            //        Component: reference.Name,
+            //        Problem: duplicate
+            //            ? $"Duplicate assembly '{reference.Name}' causes ambiguous binding"
+            //            : $"Reference '{reference.Name}' could not be resolved",
+            //        Evidence: reference.Evidence,
+            //        Solution: duplicate
+            //            ? "Remove the duplicate reference or align assembly versions."
+            //            : $"Restore the '{reference.Name}' reference (NuGet restore / HintPath).",
+            //        Notes: "Blocking-type issue: detection may be incomplete until resolved."));
+            //}
 
-            if (!project.CompilationSucceeded)
-            {
-                candidates.Add(new TodoInput(
-                    Priority: High,
-                    Category: "Compilation Issue",
-                    Project: project.ProjectName,
-                    Component: "Project",
-                    Problem: $"Project '{project.ProjectName}' could not be analyzed",
-                    Evidence: project.Diagnostics.FirstOrDefault() ?? "No compilation was produced.",
-                    Solution: "Fix the load/compilation failure and re-run analysis.",
-                    Notes: "All Session results for this project are missing."));
-            }
-            else if (project.CompilationErrorCount > 0)
-            {
-                candidates.Add(new TodoInput(
-                    Priority: Medium,
-                    Category: "Compilation Issue",
-                    Project: project.ProjectName,
-                    Component: "Project",
-                    Problem: $"{project.CompilationErrorCount} compilation error(s) limit analysis accuracy",
-                    Evidence: string.Join(" | ", project.Diagnostics.Take(3)),
-                    Solution: "Fix the compiler errors and re-run analysis.",
-                    Notes: "Types that do not bind cannot be recognized as Session types."));
-            }
+            //if (!project.CompilationSucceeded)
+            //{
+            //    candidates.Add(new TodoInput(
+            //        Priority: High,
+            //        Category: "Compilation Issue",
+            //        Project: project.ProjectName,
+            //        Component: "Project",
+            //        Problem: $"Project '{project.ProjectName}' could not be analyzed",
+            //        Evidence: project.Diagnostics.FirstOrDefault() ?? "No compilation was produced.",
+            //        Solution: "Fix the load/compilation failure and re-run analysis.",
+            //        Notes: "All Session results for this project are missing."));
+            //}
+            //else if (project.CompilationErrorCount > 0)
+            //{
+            //    candidates.Add(new TodoInput(
+            //        Priority: Medium,
+            //        Category: "Compilation Issue",
+            //        Project: project.ProjectName,
+            //        Component: "Project",
+            //        Problem: $"{project.CompilationErrorCount} compilation error(s) limit analysis accuracy",
+            //        Evidence: string.Join(" | ", project.Diagnostics.Take(3)),
+            //        Solution: "Fix the compiler errors and re-run analysis.",
+            //        Notes: "Types that do not bind cannot be recognized as Session types."));
+            //}
 
-            if (project.CompilationWarningCount > 0)
-            {
-                candidates.Add(new TodoInput(
-                    Priority: Low,
-                    Category: "Compilation Cleanup",
-                    Project: project.ProjectName,
-                    Component: "Project",
-                    Problem: $"{project.CompilationWarningCount} compilation warning(s) present",
-                    Evidence: string.Join(" | ", project.WarningList.Take(3)),
-                    Solution: "Resolve the warnings for a clean build.",
-                    Notes: "Warnings can hide binding problems that affect detection."));
-            }
+            //if (project.CompilationWarningCount > 0)
+            //{
+            //    candidates.Add(new TodoInput(
+            //        Priority: Low,
+            //        Category: "Compilation Cleanup",
+            //        Project: project.ProjectName,
+            //        Component: "Project",
+            //        Problem: $"{project.CompilationWarningCount} compilation warning(s) present",
+            //        Evidence: string.Join(" | ", project.WarningList.Take(3)),
+            //        Solution: "Resolve the warnings for a clean build.",
+            //        Notes: "Warnings can hide binding problems that affect detection."));
+            //}
 
-            var unsupported = project.RejectedCandidateList
-                .Where(r => r.Reason == SessionTypeRejectionReason.UnsupportedSessionTypeMapping)
-                .GroupBy(r => r.ResolvedType);
-            foreach (var group in unsupported)
-            {
-                var typeLabel = string.IsNullOrEmpty(group.Key) ? "<unknown>" : group.Key;
-                candidates.Add(new TodoInput(
-                    Priority: High,
-                    Category: "Analyzer Bug",
-                    Project: project.ProjectName,
-                    Component: "SessionSymbolDetector",
-                    Problem: $"'{typeLabel}' is not recognized as a Session type",
-                    Evidence: $"{group.First().Expression} — {group.First().Location.FilePath}:{group.First().Location.Line} " +
-                              $"({group.Count()} occurrence(s))",
-                    Solution: $"Add '{typeLabel}' to the supported Session type mapping.",
-                    Notes: "Detection rule change requires separate review/approval."));
-            }
+            //var unsupported = project.RejectedCandidateList
+            //    .Where(r => r.Reason == SessionTypeRejectionReason.UnsupportedSessionTypeMapping)
+            //    .GroupBy(r => r.ResolvedType);
+            //foreach (var group in unsupported)
+            //{
+            //    var typeLabel = string.IsNullOrEmpty(group.Key) ? "<unknown>" : group.Key;
+            //    candidates.Add(new TodoInput(
+            //        Priority: High,
+            //        Category: "Analyzer Bug",
+            //        Project: project.ProjectName,
+            //        Component: "SessionSymbolDetector",
+            //        Problem: $"'{typeLabel}' is not recognized as a Session type",
+            //        Evidence: $"{group.First().Expression} — {group.First().Location.FilePath}:{group.First().Location.Line} " +
+            //                  $"({group.Count()} occurrence(s))",
+            //        Solution: $"Add '{typeLabel}' to the supported Session type mapping.",
+            //        Notes: "Detection rule change requires separate review/approval."));
+            //}
 
-            var unresolved = project.RejectedCandidateList
-                .Where(r => r.Reason == SessionTypeRejectionReason.TypeNotResolved)
-                .GroupBy(r => r.ResolvedType);
-            foreach (var group in unresolved)
-            {
-                candidates.Add(new TodoInput(
-                    Priority: Medium,
-                    Category: "Reference Issue",
-                    Project: project.ProjectName,
-                    Component: "Reference Resolver",
-                    Problem: "Session-like access could not be bound to a Session type",
-                    Evidence: $"{group.First().Expression} — {group.First().Location.FilePath}:{group.First().Location.Line} " +
-                              $"({group.Count()} occurrence(s))",
-                    Solution: "Resolve the reference/path so the expression binds to its real type.",
-                    Notes: "Once bound, re-run analysis to confirm detection."));
-            }
+            //var unresolved = project.RejectedCandidateList
+            //    .Where(r => r.Reason == SessionTypeRejectionReason.TypeNotResolved)
+            //    .GroupBy(r => r.ResolvedType);
+            //foreach (var group in unresolved)
+            //{
+            //    candidates.Add(new TodoInput(
+            //        Priority: Medium,
+            //        Category: "Reference Issue",
+            //        Project: project.ProjectName,
+            //        Component: "Reference Resolver",
+            //        Problem: "Session-like access could not be bound to a Session type",
+            //        Evidence: $"{group.First().Expression} — {group.First().Location.FilePath}:{group.First().Location.Line} " +
+            //                  $"({group.Count()} occurrence(s))",
+            //        Solution: "Resolve the reference/path so the expression binds to its real type.",
+            //        Notes: "Once bound, re-run analysis to confirm detection."));
+            //}
 
             if (project.CompilationSucceeded &&
                 project.CompilationErrorCount == 0 &&
