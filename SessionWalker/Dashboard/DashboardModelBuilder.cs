@@ -157,12 +157,13 @@ public static class DashboardModelBuilder
                 Controller: controller.ControllerName,
                 File: controller.FilePath,
                 Actions: controller.Actions
-                    .Select(action =>
+                    .Select((action, index) =>
                     {
                         var operations = action.Operations
                             .Select(op => ToSessionFinding(op, canBeReadOnly))
                             .ToList();
                         return new ActionDetailModel(
+                            Row: index,
                             Action: action.ActionName,
                             File: action.Location.FilePath,
                             Line: action.Location.Line,
@@ -914,22 +915,22 @@ public static class DashboardModelBuilder
             //        Notes: "Detection rule change requires separate review/approval."));
             //}
 
-            //var unresolved = project.RejectedCandidateList
-            //    .Where(r => r.Reason == SessionTypeRejectionReason.TypeNotResolved)
-            //    .GroupBy(r => r.ResolvedType);
-            //foreach (var group in unresolved)
-            //{
-            //    candidates.Add(new TodoInput(
-            //        Priority: Medium,
-            //        Category: "Reference Issue",
-            //        Project: project.ProjectName,
-            //        Component: "Reference Resolver",
-            //        Problem: "Session-like access could not be bound to a Session type",
-            //        Evidence: $"{group.First().Expression} — {group.First().Location.FilePath}:{group.First().Location.Line} " +
-            //                  $"({group.Count()} occurrence(s))",
-            //        Solution: "Resolve the reference/path so the expression binds to its real type.",
-            //        Notes: "Once bound, re-run analysis to confirm detection."));
-            //}
+            var unresolved = project.RejectedCandidateList
+                .Where(r => r.Reason == SessionTypeRejectionReason.TypeNotResolved)
+                .GroupBy(r => r.ResolvedType);
+            foreach (var group in unresolved)
+            {
+                candidates.Add(new TodoInput(
+                    Priority: Medium,
+                    Category: "Reference Issue",
+                    Project: project.ProjectName,
+                    Component: "Reference Resolver",
+                    Problem: "Session-like access could not be bound to a Session type",
+                    Evidence: $"{group.First().Expression} — {group.First().Location.FilePath}:{group.First().Location.Line} " +
+                              $"({group.Count()} occurrence(s))",
+                    Solution: "Resolve the reference/path so the expression binds to its real type.",
+                    Notes: "Once bound, re-run analysis to confirm detection."));
+            }
 
             if (project.CompilationSucceeded &&
                 project.CompilationErrorCount == 0 &&

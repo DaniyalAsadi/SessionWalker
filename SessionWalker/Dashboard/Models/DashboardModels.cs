@@ -101,6 +101,7 @@ public sealed record ControllerDetailModel(
 /// One action with its Session usage summary and the detected operations.
 /// </summary>
 public sealed record ActionDetailModel(
+    int Row,
     string Action,
     string File,
     int Line,
@@ -111,6 +112,7 @@ public sealed record ActionDetailModel(
     bool CanBeReadOnly,
     IReadOnlyList<SessionFindingModel> Operations)
 {
+    public int Row { get; } = Row;
     public string Action { get; } = Action;
     public string File { get; } = File;
     public int Line { get; } = Line;
